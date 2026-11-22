@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Persona AI — Soutenance Epitech</title>
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+  <style>
+    :root {
+      /* Palette Apple Pro Dark Mode */
+      --apple-black: #000000;
+      --apple-surface: #1d1d1f;
+      --apple-surface-elevated: #2c2c2e;
+      --apple-border: rgba(255, 255, 255, 0.1);
+      --apple-border-hover: rgba(255, 255, 255, 0.24);
+      --apple-text: #f5f5f7;
+      --apple-muted: #86868b;
+      --apple-blue: #0071e3;
+      --apple-blue-light: #2997ff;
+      --apple-green: #30d158;
+      --apple-red: #ff453a;
+
+      /* Variables officielles du widget @n8n/chat corrigées */
+      --chat--color-primary: #0071e3;
+      --chat--color-primary-shade-50: #0077ed;
+      --chat--color-primary-shade-100: #005bb5;
+      --chat--color-secondary: #30d158;
+      --chat--color-white: #ffffff;
+      --chat--color-light: #1d1d1f;
+      --chat--color-light-shade-50: #2c2c2e;
+      --chat--color-light-shade-100: #3a3a3c;
+      --chat--color-medium: #86868b;
+      --chat--color-dark: #f5f5f7;
+      --chat--color-typing: #86868b;
+
+      /* Dimensions et style de la fenêtre de chat */
+      --chat--window--width: 420px;
+      --chat--window--height: 620px;
+      --chat--window--border-radius: 24px;
+      --chat--window--border: 1px solid rgba(255, 255, 255, 0.16);
+
+      /* En-tête du chat */
+      --chat--header--background: #1d1d1f;
+      --chat--header--color: #f5f5f7;
+
+      /* Bulles de messages */
+      --chat--message--bot--background: #2c2c2e;
+      --chat--message--bot--color: #f5f5f7;
+      --chat--message--user--background: #0071e3;
+      --chat--message--user--color: #ffffff;
+
+      /* Bulle flottante (Toggle) avec changement de couleur */
+      --chat--toggle--size: 64px;
+      --chat--toggle--background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
+      --chat--toggle--hover--background: linear-gradient(135deg, #2997ff 0%, #7d7aff 100%);
+      --chat--toggle--active--background: #30d158;
+      --chat--toggle--color: #ffffff;
+    }
+
+    /* Reset ciblé pour ne pas casser l'input du widget n8n */
+    body, h1, h2, h3, h4, p, ul, li, figure, section, header, footer, main {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: var(--apple-black);
+      color: var(--apple-text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Fix explicite de la zone d'input du chatbot n8n */
+    .n8n-chat textarea,
+    .chat-inputs textarea {
+      background-color: #2c2c2e !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border-radius: 14px !important;
+      padding: 12px 14px !important;
+      font-size: 0.95rem !important;
+      min-height: 46px !important;
+    }
+
+    .n8n-chat textarea::placeholder,
+    .chat-inputs textarea::placeholder {
+      color: #86868b !important;
+    }
+
+    .chat-inputs {
+      background-color: #1d1d1f !important;
+      padding: 12px !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .chat-input-send-button {
+      background-color: #0071e3 !important;
+      color: #ffffff !important;
+      border-radius: 12px !important;
+      margin-left: 8px !important;
+    }
+
+    /* Animation et couleur de la bulle d'ouverture du chat */
+    .chat-window-toggle {
+      box-shadow: 0 10px 30px rgba(0, 113, 227, 0.5) !important;
+      border: 2px solid rgba(255, 255, 255, 0.25) !important;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .chat-window-toggle:hover {
+      transform: scale(1.08) !important;
+      box-shadow: 0 12px 36px rgba(48, 209, 88, 0.6) !important;
+      background: linear-gradient(135deg, #30d158 0%, #0071e3 100%) !important;
+    }
+
+    /* Barre de navigation Apple Glassmorphism */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 52px;
+      background-color: rgba(0, 0, 0, 0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0 2rem;
+    }
+
+    .nav-container {
+      max-width: 1024px;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--apple-text);
+    }
+
+    .epitech-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.55rem;
+      border-radius: 980px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--apple-muted);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.75rem;
+      font-size: 0.78rem;
+    }
+
+    .nav-links a {
+      color: rgba(245, 245, 247, 0.8);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: #ffffff;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--apple-text);
+      background: rgba(48, 209, 88, 0.14);
+      border: 1px solid rgba(48, 209, 88, 0.35);
+      padding: 0.22rem 0.7rem;
+      border-radius: 980px;
+    }
+
+    .status-badge.warning {
+      background: rgba(255, 159, 10, 0.16);
+      border: 1px solid rgba(255, 159, 10, 0.45);
+      color: #ff9f0a;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--apple-green);
+      box-shadow: 0 0 8px var(--apple-green);
+    }
+
+    .status-dot.warning {
+      background-color: #ff9f0a;
+      box-shadow: 0 0 8px #ff9f0a;
+    }
+
+    /* Bandeau d'annonce supérieure */
+    .maintenance-banner {
+      background: rgba(255, 159, 10, 0.12);
+      border-bottom: 1px solid rgba(255, 159, 10, 0.28);
+      color: #ffd60a;
+      text-align: center;
+      padding: 0.7rem 1.2rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+
+    /* Conteneur principal */
+    .wrapper {
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 4.5rem 1.5rem 6rem;
+    }
+
+    /* Section Hero */
+    .hero {
+      text-align: center;
+      padding: 2rem 0 4.5rem;
+    }
+
+    .hero-eyebrow {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--apple-blue-light);
+      margin-bottom: 0.6rem;
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.06;
+      margin-bottom: 1.4rem;
+      background: linear-gradient(180deg, #ffffff 0%, #a1a1a6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-lead {
+      font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+      color: var(--apple-muted);
+      max-width: 740px;
+      margin: 0 auto;
+      line-height: 1.45;
+    }
+
+    section {
+      margin-top: 5.5rem;
+      scroll-margin-top: 76px;
+    }
+
+    .section-eyebrow {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--apple-muted);
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+
+    h2 {
+      font-size: clamp(1.9rem, 3.8vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.12;
+      color: var(--apple-text);
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      font-size: 1.12rem;
+      color: var(--apple-muted);
+      max-width: 760px;
+      margin-bottom: 2.2rem;
+      line-height: 1.55;
+    }
+
+    /* Bento Grid Apple */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .bento-card {
+      background-color: var(--apple-surface);
+      border-radius: 28px;
+      padding: 2rem;
+      border: 1px solid var(--apple-border);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+    }
+
+    .bento-card:hover {
+      transform: scale(1.015);
+      border-color: var(--apple-border-hover);
+    }
+
+    .bento-tag {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--apple-blue-light);
+      margin-bottom: 0.6rem;
+      display: inline-block;
+    }
+
+    .bento-card h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--apple-text);
+      margin-bottom: 0.65rem;
+    }
+
+    .bento-card p {
+      font-size: 0.96rem;
+      color: var(--apple-muted);
+      line-height: 1.55;
+    }
+
+    code.inline {
+      font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--apple-text);
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+      font-size: 0.86em;
+    }
+
+    /* Fenêtre macOS Terminal */
+    .macos-window {
+      margin-top: 2rem;
+      background-color: var(--apple-surface);
+      border: 1px solid var(--apple-border);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+    }
+
+    .macos-titlebar {
+      background-color: var(--apple-surface-elevated);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--apple-border);
+    }
+
+    .traffic-lights {
+      display: flex;
+      gap: 8px;
+    }
+
+    .light {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .light.red { background-color: #ff5f56; }
+    .light.yellow { background-color: #ffbd2e; }
+    .light.green { background-color: #27c93f; }
+
+    .window-title {
+      font-size: 0.8rem;
+      color: var(--apple-muted);
+      font-weight: 500;
+    }
+
+    .macos-body {
+      padding: 1.6rem 1.8rem;
+      font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    .prompt-item {
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+    }
+
+    .prompt-comment {
+      color: var(--apple-blue-light);
+      font-size: 0.78rem;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    .prompt-text {
+      color: var(--apple-text);
+      line-height: 1.45;
+    }
+
+    /* Grille Problèmes & Solutions */
+    .issues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .issue-row {
+      background-color: var(--apple-surface);
+      border: 1px solid var(--apple-border);
+      border-radius: 24px;
+      padding: 1.6rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .issue-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.65rem;
+      border-radius: 980px;
+      margin-bottom: 0.55rem;
+    }
+
+    .badge-problem {
+      background: rgba(255, 69, 58, 0.15);
+      color: var(--apple-red);
+    }
+
+    .badge-solution {
+      background: rgba(48, 209, 88, 0.15);
+      color: var(--apple-green);
+    }
+
+    .issue-row h4 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--apple-text);
+    }
+
+    .issue-row p {
+      font-size: 0.92rem;
+      color: var(--apple-muted);
+      line-height: 1.5;
+    }
+
+    /* Carte finale Call-To-Action "Prêt à tester ?" */
+    .cta-card {
+      margin-top: 5.5rem;
+      background: radial-gradient(circle at top right, rgba(0, 113, 227, 0.35), #1d1d1f 62%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 32px;
+      padding: 3.5rem 2.5rem;
+      text-align: center;
+    }
+
+    .cta-card h2 {
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      margin-bottom: 0.85rem;
+    }
+
+    .cta-card p {
+      font-size: 1.12rem;
+      color: var(--apple-muted);
+      max-width: 620px;
+      margin: 0 auto 1.8rem;
+    }
+
+    .apple-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1.02rem;
+      padding: 0.9rem 1.85rem;
+      border-radius: 980px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 113, 227, 0.4);
+      transition: all 0.25s ease;
+    }
+
+    .apple-btn:hover {
+      background: linear-gradient(135deg, #30d158 0%, #0071e3 100%);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(48, 209, 88, 0.45);
+    }
+
+    .apple-btn.is-open {
+      background: linear-gradient(135deg, #30d158 0%, #28a745 100%);
+    }
+
+    footer {
+      border-top: 1px solid var(--apple-border);
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      font-size: 0.8rem;
+      color: var(--apple-muted);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      .issue-row {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Bandeau d'information : Service en construction -->
+  <div class="maintenance-banner">
+    🚧 <strong>Notice :</strong> Le service de newsletter automatisée et le chatbot sont actuellement en cours de construction. Il n'est pas possible de discuter avec le chatbot pour le moment.
+  </div>
+
+  <!-- Barre de navigation Apple -->
+  <header>
+    <div class="nav-container">
+      <div class="nav-left">
+        <span> Persona AI</span>
+        <span class="epitech-pill">Epitech</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#rappel">1. Projet</a>
+        <a href="#organisation">2. Organisation</a>
+        <a href="#demo">3. Démonstration</a>
+        <a href="#problemes">4. Problèmes &amp; Solutions</a>
+        <a href="#conclusion">5. Conclusion</a>
+      </nav>
+      <div class="status-badge warning">
+        <span class="status-dot warning"></span>
+        <span>En cours de construction</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrapper">
+
+    <!-- HERO SECTION -->
+    <div class="hero">
+      <div class="hero-eyebrow">Soutenance de Projet Epitech</div>
+      <h1>Persona AI.<br />Votre veille. Sur mesure.</h1>
+      <p class="hero-lead">
+        Un assistant conversationnel intelligent et un pipeline d'agrégation automatisé sous Docker, conçus avec n8n, SearXNG et Google Gemini pour rédiger et livrer votre newsletter quotidienne à la minute près.
+      </p>
+    </div>
+
+    <!-- ÉTAPE 1 : RAPPEL DU PROJET -->
+    <section id="rappel">
+      <span class="section-eyebrow">01 • Rappel du Projet</span>
+      <h2>Une architecture pensée pour l'autonomie.</h2>
+      <p class="section-desc">
+        L'objectif de <strong>Persona</strong> est d'éliminer le bruit informationnel : l'utilisateur discute en langage naturel avec un chatbot pour définir ses sujets d'intérêt, son ton éditorial et son heure de réception, puis reçoit chaque jour une synthèse HTML générée sur mesure.
+      </p>
+
+      <div class="bento-grid">
+        <div class="bento-card">
+          <span class="bento-tag">Orchestration • n8n</span>
+          <h3>Architecture Multi-Agents</h3>
+          <p>
+            Deux workflows découplés (<code class="inline">auth_workflow</code> et <code class="inline">Newsletter Workflow</code>) reliés par deux tables relationnelles internes : <code class="inline">users</code> et <code class="inline">sessions</code>.
+          </p>
+        </div>
+
+        <div class="bento-card">
+          <span class="bento-tag">Collecte • SearXNG</span>
+          <h3>Métamoteur Conteneurisé</h3>
+          <p>
+            Interrogation multi-sources en temps réel via l'API JSON locale de SearXNG, filtrage pertinent et dédoublonnage strict des URLs entre les thématiques.
+          </p>
+        </div>
+
+        <div class="bento-card">
+          <span class="bento-tag">Synthèse • Google Gemini</span>
+          <h3>Rédaction Éditoriale</h3>
+          <p>
+            Structuration JSON garantie par <code class="inline">Structured Output Parser</code>, adaptation au style de l'utilisateur (<code class="inline">custom_prompt</code>) et génération HTML responsive.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ÉTAPE 2 : GESTION DE L'ORGANISATION -->
+    <section id="organisation">
+      <span class="section-eyebrow">02 • Gestion de l'Organisation</span>
+      <h2>Synchronisés à chaque étape.</h2>
+      <p class="section-desc">
+        Pour développer simultanément l'intelligence conversationnelle et le moteur d'expédition automatique sans conflit, nous avons structuré notre méthode de travail autour de trois piliers :
+      </p>
+
+      <div class="bento-grid">
+        <div class="bento-card">
+          <span class="bento-tag">Communication</span>
+          <h3>Coordination sur Discord</h3>
+          <p>
+            Points vocaux quotidiens sur <strong>Discord</strong>, sessions de débogage en partage d'écran sur les expressions n8n et salon dédié à l'échange des schémas JSON et variables d'environnement.
+          </p>
+        </div>
+
+        <div class="bento-card">
+          <span class="bento-tag">Répartition des tâches</span>
+          <h3>Développement en Parallèle</h3>
+          <p>
+            Définition initiale du contrat de données (<code class="inline">users</code> / <code class="inline">sessions</code>), permettant d'avancer en binôme sur le <strong>Workflow 1 (Auth &amp; Chat)</strong> d'un côté et le <strong>Workflow 2 (Cron &amp; SearXNG)</strong> de l'autre.
+          </p>
+        </div>
+
+        <div class="bento-card">
+          <span class="bento-tag">Infrastructure</span>
+          <h3>Standardisation Docker &amp; Git</h3>
+          <p>
+            Environnement conteneurisé reproductible via <code class="inline">compose.yml</code> et documentation technique centralisée dans le <code class="inline">README.md</code> pour faciliter l'intégration finale.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ÉTAPE 3 : DÉMONSTRATION DES FONCTIONNALITÉS -->
+    <section id="demo">
+      <span class="section-eyebrow">03 • Démonstration des Fonctionnalités</span>
+      <h2>Du premier message jusqu'à la boîte mail.</h2>
+      <p class="section-desc">
+        Le parcours utilisateur couvre l'intégralité du cycle de vie de la donnée : inscription sécurisée, reconnaissance de session, personnalisation à la volée et expédition planifiée.
+      </p>
+
+      <div class="bento-grid">
+        <div class="bento-card">
+          <span class="bento-tag">Étape 1 • Auth Agent</span>
+          <h3>Inscription, SHA-256 &amp; RGPD</h3>
+          <p>
+            Validation du consentement RGPD, hachage immédiat du mot de passe en <code class="inline">SHA-256</code> dans la table <code class="inline">users</code> et création automatique de la session active.
+          </p>
+        </div>
+
+        <div class="bento-card">
+          <span class="bento-tag">Étape 2 • Persona Agent</span>
+          <h3>Gestion Dynamique du Profil</h3>
+          <p>
+            Aiguillage automatique via le nœud <code class="inline">If</code> : modification en direct de <code class="inline">send_time</code>, <code class="inline">topics</code> ou <code class="inline">custom_prompt</code>, mise en pause ou droit à l'oubli.
+          </p>
+        </div>
+
+        <div class="bento-card">
+          <span class="bento-tag">Étape 3 • Cron Pipeline</span>
+          <h3>Distribution &amp; Traçabilité</h3>
+          <p>
+            Exécution toutes les minutes (<code class="inline">Schedule Trigger</code>), vérification de l'heure locale <code class="inline">Europe/Paris</code>, envoi SMTP et horodatage dans <code class="inline">last_sent_at</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Fenêtre macOS avec les prompts de démo -->
+      <div class="macos-window">
+        <div class="macos-titlebar">
+          <div class="traffic-lights">
+            <span class="light red"></span>
+            <span class="light yellow"></span>
+            <span class="light green"></span>
+          </div>
+          <span class="window-title">Scénarios de démonstration live — Copier dans le chat</span>
+          <span></span>
+        </div>
+        <div class="macos-body">
+          <div class="prompt-item">
+            <span class="prompt-comment">// 1. Créer un compte avec hachage SHA-256 et consentement RGPD</span>
+            <span class="prompt-text">"Inscris-moi avec demo@epitech.eu, mot de passe secret123, sujets science et football à 14h30, de manière fun, j'accepte le RGPD"</span>
+          </div>
+          <div class="prompt-item">
+            <span class="prompt-comment">// 2. Modifier ses préférences via le Persona Agent (session reconnue)</span>
+            <span class="prompt-text">"Modifie mon heure d'envoi à 14h35 et ajoute l'intelligence artificielle à mes sujets"</span>
+          </div>
+          <div class="prompt-item">
+            <span class="prompt-comment">// 3. Se reconnecter sur une nouvelle session avec vérification du hash SHA-256</span>
+            <span class="prompt-text">"Connecte-moi avec demo@epitech.eu et le mot de passe secret123"</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ÉTAPE 4 : PROBLÈMES RENCONTRÉS & SOLUTIONS APPORTÉES -->
+    <section id="problemes">
+      <span class="section-eyebrow">04 • Retour d'Expérience Technique</span>
+      <h2>Problèmes rencontrés. Solutions apportées.</h2>
+      <p class="section-desc">
+        La mise en production conjointe d'agents LLM et de tâches planifiées nous a confrontés à cinq défis techniques concrets que nous avons résolus :
+      </p>
+
+      <div class="issues-list">
+        <div class="issue-row">
+          <div>
+            <span class="issue-badge badge-problem">Problème 01</span>
+            <h4>Erreur [hash can't be used on undefined value]</h4>
+            <p>
+              Dans les outils <code class="inline">Create User</code> et <code class="inline">Get User</code>, l'appel à <code class="inline">.hash('sha256')</code> échouait dans l'éditeur car <code class="inline">$fromAI()</code> vaut <code class="inline">undefined</code> au repos.
+            </p>
+          </div>
+          <div>
+            <span class="issue-badge badge-solution">Solution Apportée</span>
+            <h4>Sécurisation par Fallback String</h4>
+            <p>
+              Encapsulation de la variable IA dans <code class="inline">String($fromAI(...) || '').hash('sha256')</code> pour garantir une chaîne valide en toutes circonstances.
+            </p>
+          </div>
+        </div>
+
+        <div class="issue-row">
+          <div>
+            <span class="issue-badge badge-problem">Problème 02</span>
+            <h4>Perte du Session ID &amp; Hallucinations d'Outils</h4>
+            <p>
+              L'agent IA générait parfois un identifiant de session fictif ou annonçait avoir modifié <code class="inline">send_time</code> sans exécuter le nœud de mise à jour.
+            </p>
+          </div>
+          <div>
+            <span class="issue-badge badge-solution">Solution Apportée</span>
+            <h4>Injection Déterministe &amp; Prompt Système Strict</h4>
+            <p>
+              Forçage de l'expression <code class="inline">{{ $('When chat message received').first().json.sessionId }}</code> dans <code class="inline">Save Session</code> et consigne stricte d'exécution d'outil dans le <code class="inline">Persona Agent</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="issue-row">
+          <div>
+            <span class="issue-badge badge-problem">Problème 03</span>
+            <h4>Réinitialisation de is_active et gdpr_consent</h4>
+            <p>
+              Après l'envoi d'une newsletter, le nœud <code class="inline">Update send date</code> écrasait les colonnes booléennes <code class="inline">is_active</code> et <code class="inline">gdpr_consent</code> à <code class="inline">false</code>.
+            </p>
+          </div>
+          <div>
+            <span class="issue-badge badge-solution">Solution Apportée</span>
+            <h4>Isolation Stricte des Colonnes Modifiées</h4>
+            <p>
+              Suppression des champs booléens non ciblés dans le formulaire <code class="inline">Columns to Update</code> afin de ne modifier exclusivement que <code class="inline">last_sent_at</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="issue-row">
+          <div>
+            <span class="issue-badge badge-problem">Problème 04</span>
+            <h4>Décalage Horaire UTC &amp; Formats d'Heures</h4>
+            <p>
+              Le conteneur Docker tournant en UTC, la comparaison stricte avec l'heure locale de l'utilisateur (<code class="inline">17h10</code> vs <code class="inline">17:10</code>) bloquait l'exécution automatique.
+            </p>
+          </div>
+          <div>
+            <span class="issue-badge badge-solution">Solution Apportée</span>
+            <h4>Fuseau Europe/Paris &amp; Condition Anti-Doublon</h4>
+            <p>
+              Conversion explicite sur <code class="inline">Europe/Paris</code> dans <code class="inline">Split Topics</code>, normalisation du séparateur <code class="inline">h/:</code> et déclenchement dès que <code class="inline">currentHHMM &gt;= userTime</code> une seule fois par jour.
+            </p>
+          </div>
+        </div>
+
+        <div class="issue-row">
+          <div>
+            <span class="issue-badge badge-problem">Problème 05</span>
+            <h4>Erreurs Réseau DNS Docker (EAI_AGAIN)</h4>
+            <p>
+              Échecs intermittents de résolution DNS lors des appels sortants du conteneur Node.js n8n vers l'API Google Gemini.
+            </p>
+          </div>
+          <div>
+            <span class="issue-badge badge-solution">Solution Apportée</span>
+            <h4>Priorisation IPv4 dans Docker Compose</h4>
+            <p>
+              Configuration de <code class="inline">NODE_OPTIONS=--dns-result-order=ipv4first</code> et des serveurs DNS <code class="inline">1.1.1.1</code> / <code class="inline">8.8.8.8</code> dans <code class="inline">compose.yml</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ÉTAPE 5 : CONCLUSION -->
+    <section id="conclusion">
+      <span class="section-eyebrow">05 • Conclusion &amp; Perspectives</span>
+      <h2>L'IA générative, encadrée par une logique fiable.</h2>
+      <p class="section-desc">
+        <strong>Persona AI</strong> démontre qu'en associant la souplesse d'un LLM (Google Gemini) à la rigueur d'un orchestrateur (n8n) et d'un métamoteur open-source (SearXNG), il est possible de bâtir un service automatisé complet, sécurisé (SHA-256, RGPD) et directement exploitable en production.
+      </p>
+    </section>
+
+    <!-- BANNIÈRE FINALE : EN COURS DE CONSTRUCTION -->
+    <div class="cta-card">
+      <span class="issue-badge badge-problem" style="margin-bottom: 1rem; font-size: 0.85rem; padding: 0.35rem 0.95rem;">
+        🚧 Service temporairement indisponible
+      </span>
+      <h2>Newsletter &amp; Chatbot en construction</h2>
+      <p>
+        Le service de newsletter automatisée et le chatbot Persona AI sont actuellement en cours de construction et d'optimisation technique. <strong>Vous ne pouvez pas discuter avec le chatbot pour le moment.</strong>
+      </p>
+      <button id="custom-chat-trigger" class="apple-btn" type="button" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none; cursor: pointer;">
+        🔒 Chatbot indisponible pour le moment
+      </button>
+      <p id="chat-alert-msg" style="display: none; margin-top: 1.25rem; font-size: 0.92rem; color: #ff9f0a; font-weight: 500;">
+        ⚠️ Le backend n8n / Docker est actuellement hors ligne. La discussion avec l'IA sera réactivée prochainement.
+      </p>
+    </div>
+
+  </main>
+
+  <footer>
+    Soutenance Epitech — Projet Persona AI • Conçu avec Docker, n8n, SearXNG &amp; Google Gemini.
+  </footer>
+
+  <script>
+    // Notification interactive informant de l'indisponibilité du chatbot
+    const customBtn = document.getElementById('custom-chat-trigger');
+    const alertMsg = document.getElementById('chat-alert-msg');
+
+    if (customBtn) {
+      customBtn.addEventListener('click', () => {
+        if (alertMsg) {
+          alertMsg.style.display = 'block';
+        }
+        alert("Le service de newsletter et le chatbot sont actuellement en cours de construction. Le serveur n8n n'est pas actif pour le moment.");
+      });
+    }
+
+    /*
+    // Configuration n8n à réactiver lors du déploiement en ligne du serveur n8n :
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    createChat({
+      webhookUrl: 'https://VOTRE_DOMAINE_N8N/webhook/c2843e7b-316a-4da0-8320-5b1fc7cb0c9c/chat',
+      mode: 'window',
+      showWelcomeScreen: false,
+      defaultLanguage: 'fr',
+      initialMessages: [
+        'Bonjour ! 👋 Bienvenue sur la démonstration live de Persona AI.',
+        'Souhaitez-vous créer un compte, vous connecter ou personnaliser votre newsletter ?'
+      ],
+      i18n: {
+        fr: {
+          title: 'Persona AI',
+          subtitle: 'Assistant Newsletter • Démo Live',
+          inputPlaceholder: 'Écrivez votre message ici...',
+          getStarted: 'Démarrer la discussion'
+        }
+      }
+    });
+    */
+  </script>
+
+</body>
+</html>
